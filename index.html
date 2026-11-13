@@ -9,7 +9,7 @@
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js for Analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -131,6 +131,12 @@
                         <p class="text-amber-200/80 text-sm mt-1 max-w-xl">
                             Pilih menu favoritmu, masukkan nomor meja, dan lakukan pembayaran langsung secara digital atau tunai.
                         </p>
+                        <div class="flex flex-wrap items-center gap-3 mt-3 text-xs">
+                            <span id="customer-rating-summary"></span>
+                            <button onclick="openReviewModal()" class="font-bold px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 border border-white/20 text-white transition">
+                                <i class="fa-solid fa-star text-amber-300 mr-1"></i> Beri Ulasan
+                            </button>
+                        </div>
                     </div>
                     <!-- Live Status Tracker Shortcut -->
                     <div class="bg-white/10 backdrop-blur-md p-3.5 rounded-xl border border-white/10 flex items-center space-x-3 w-full md:w-auto">
@@ -292,6 +298,9 @@
                     <button id="seller-tab-btn-menu" onclick="switchSellerTab('menu')" class="px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200">
                         <i class="fa-solid fa-boxes-stacked mr-1.5"></i> Kelola Menu & Stok
                     </button>
+                    <button id="seller-tab-btn-reviews" onclick="switchSellerTab('reviews')" class="px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200">
+                        <i class="fa-solid fa-star mr-1.5"></i> Ulasan Pelanggan
+                    </button>
                 </div>
                 <div class="text-xs text-slate-500 font-medium flex items-center space-x-2">
                     <span class="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
@@ -416,16 +425,34 @@
                 </div>
             </div>
 
-            <!-- SUB-TAB 3: LAPORAN & ANALYTICS KEUANGAN -->
+            <!-- SUB-TAB 3: LAPORAN & REKAP PENJUALAN -->
             <div id="seller-sec-reports" class="hidden space-y-6">
-                
+
+                <!-- Pemilih Periode Laporan -->
+                <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div class="flex items-center bg-slate-100 p-1 rounded-lg w-full md:w-auto">
+                        <button id="report-period-btn-daily" onclick="setReportPeriod('daily')" class="flex-1 md:flex-none px-4 py-1.5 rounded-md text-xs font-bold transition">Harian</button>
+                        <button id="report-period-btn-weekly" onclick="setReportPeriod('weekly')" class="flex-1 md:flex-none px-4 py-1.5 rounded-md text-xs font-bold transition">Mingguan</button>
+                        <button id="report-period-btn-monthly" onclick="setReportPeriod('monthly')" class="flex-1 md:flex-none px-4 py-1.5 rounded-md text-xs font-bold transition">Bulanan</button>
+                    </div>
+                    <div class="flex items-center gap-2 justify-between md:justify-end">
+                        <button onclick="shiftReportPeriod(-1)" aria-label="Periode sebelumnya" class="w-8 h-8 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                        <div class="text-center min-w-[170px]">
+                            <p id="report-period-type" class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Laporan Harian</p>
+                            <p id="report-period-label" class="text-sm font-extrabold text-slate-800">-</p>
+                        </div>
+                        <button id="report-next-btn" onclick="shiftReportPeriod(1)" aria-label="Periode berikutnya" class="w-8 h-8 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                        <button onclick="resetReportPeriod()" class="text-xs font-bold px-3 py-2 rounded-lg bg-brand-50 text-brand-700 border border-amber-200 hover:bg-amber-100">Terkini</button>
+                    </div>
+                </div>
+
                 <!-- Financial KPI Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-slate-500 font-medium">Omzet Hari Ini</p>
+                            <p id="kpi-revenue-label" class="text-xs text-slate-500 font-medium">Omzet</p>
                             <h4 id="kpi-today-revenue" class="text-xl font-extrabold text-slate-800 mt-0.5">Rp 0</h4>
-                            <span class="text-[10px] text-green-600 font-semibold"><i class="fa-solid fa-arrow-up"></i> Real-time terpantau</span>
+                            <span id="kpi-revenue-change" class="text-[10px] font-semibold"></span>
                         </div>
                         <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-brand-600 text-xl">
                             <i class="fa-solid fa-wallet"></i>
@@ -436,7 +463,7 @@
                         <div>
                             <p class="text-xs text-slate-500 font-medium">Total Transaksi</p>
                             <h4 id="kpi-total-orders" class="text-xl font-extrabold text-slate-800 mt-0.5">0</h4>
-                            <span class="text-[10px] text-slate-400">Pesanan selesai</span>
+                            <span id="kpi-orders-change" class="text-[10px] font-semibold"></span>
                         </div>
                         <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 text-xl">
                             <i class="fa-solid fa-bag-shopping"></i>
@@ -447,7 +474,7 @@
                         <div>
                             <p class="text-xs text-slate-500 font-medium">Rata-rata Transaksi</p>
                             <h4 id="kpi-avg-order" class="text-xl font-extrabold text-slate-800 mt-0.5">Rp 0</h4>
-                            <span class="text-[10px] text-slate-400">Per keranjang</span>
+                            <span id="kpi-items-sold" class="text-[10px] text-slate-400"></span>
                         </div>
                         <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 text-xl">
                             <i class="fa-solid fa-chart-pie"></i>
@@ -458,7 +485,7 @@
                         <div>
                             <p class="text-xs text-slate-500 font-medium">Estimasi Laba Bersih (~35%)</p>
                             <h4 id="kpi-estimated-profit" class="text-xl font-extrabold text-emerald-600 mt-0.5">Rp 0</h4>
-                            <span class="text-[10px] text-emerald-600 font-semibold">Margin usaha angkringan</span>
+                            <span id="kpi-rating" class="text-[10px] text-amber-600 font-semibold"></span>
                         </div>
                         <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 text-xl">
                             <i class="fa-solid fa-money-bill-trend-up"></i>
@@ -466,16 +493,74 @@
                     </div>
                 </div>
 
-                <!-- Sales Chart Section -->
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
-                    <div class="flex justify-between items-center">
+                <!-- Grafik + Menu Terlaris -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
                         <div>
-                            <h4 class="font-bold text-slate-800">Grafik Tren Penjualan</h4>
-                            <p class="text-xs text-slate-500">Visualisasi omzet transaksi berdasarkan data historis</p>
+                            <h4 class="font-bold text-slate-800">Grafik Penjualan</h4>
+                            <p id="chart-subtitle" class="text-xs text-slate-500">Omzet dan jumlah transaksi</p>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="salesChart"></canvas>
                         </div>
                     </div>
-                    <div class="h-64 relative">
-                        <canvas id="salesChart"></canvas>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <div>
+                            <h4 class="font-bold text-slate-800">Menu Terlaris</h4>
+                            <p class="text-xs text-slate-500">Berdasarkan jumlah porsi terjual</p>
+                        </div>
+                        <div id="top-menu-list" class="space-y-3"></div>
+                        <div class="pt-3 border-t border-slate-100 space-y-2">
+                            <p class="text-xs font-bold text-slate-700">Metode Pembayaran</p>
+                            <div class="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                                <div id="pay-bar-qris" class="h-full bg-blue-500" style="width:0%"></div>
+                                <div id="pay-bar-cash" class="h-full bg-green-500" style="width:0%"></div>
+                            </div>
+                            <div class="flex justify-between text-[11px] text-slate-500">
+                                <span><span class="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1"></span>QRIS <b id="pay-label-qris" class="text-slate-700">0%</b></span>
+                                <span><span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span>Tunai <b id="pay-label-cash" class="text-slate-700">0%</b></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rekap Penjualan -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
+                            <h4 class="font-bold text-slate-800">Rekap Penjualan</h4>
+                            <p id="recap-subtitle" class="text-xs text-slate-500">Ringkasan per hari</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <div class="flex items-center bg-slate-100 p-1 rounded-lg">
+                                <button id="recap-btn-day" onclick="setRecapMode('day')" class="px-3 py-1 rounded-md text-xs font-bold transition">Per Hari</button>
+                                <button id="recap-btn-week" onclick="setRecapMode('week')" class="px-3 py-1 rounded-md text-xs font-bold transition">Per Minggu</button>
+                                <button id="recap-btn-month" onclick="setRecapMode('month')" class="px-3 py-1 rounded-md text-xs font-bold transition">Per Bulan</button>
+                            </div>
+                            <button onclick="exportRecapToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-3 py-1.5 rounded-lg flex items-center space-x-1 transition">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Export Rekap</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto max-h-[420px] overflow-y-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-50 text-slate-700 uppercase text-[10px] tracking-wider font-bold border-b sticky top-0">
+                                <tr>
+                                    <th class="py-3 px-3">Periode</th>
+                                    <th class="py-3 px-3 text-right">Transaksi</th>
+                                    <th class="py-3 px-3 text-right">Porsi</th>
+                                    <th class="py-3 px-3 text-right">QRIS</th>
+                                    <th class="py-3 px-3 text-right">Tunai</th>
+                                    <th class="py-3 px-3 text-right">Omzet</th>
+                                    <th class="py-3 px-3 text-right">Est. Laba</th>
+                                    <th class="py-3 px-3">Menu Terlaris</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recap-table-body" class="divide-y divide-slate-100"></tbody>
+                            <tfoot id="recap-table-foot" class="bg-amber-50 font-bold text-slate-800 border-t-2 border-amber-200"></tfoot>
+                        </table>
                     </div>
                 </div>
 
@@ -483,22 +568,21 @@
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-3 p-4">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-                            <h4 class="font-bold text-slate-800">Riwayat Transaksi Lengkap</h4>
-                            <p class="text-xs text-slate-500">Tercatat terstruktur secara digital (Solusi To-Be)</p>
+                            <h4 class="font-bold text-slate-800">Riwayat Transaksi</h4>
+                            <p id="transaction-subtitle" class="text-xs text-slate-500">Transaksi pada periode terpilih</p>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <input type="text" id="report-search" oninput="renderTransactionReportTable()" placeholder="Cari nama/ID/metode..." class="bg-slate-50 border border-slate-200 text-xs px-3 py-1.5 rounded-lg">
+                            <input type="text" id="report-search" oninput="renderTransactionTable()" placeholder="Cari nama/ID/metode..." class="bg-slate-50 border border-slate-200 text-xs px-3 py-1.5 rounded-lg">
                             <button onclick="exportTransactionToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-3 py-1.5 rounded-lg flex items-center space-x-1 transition">
                                 <i class="fa-solid fa-file-excel"></i>
-                                <span>Export CSV/Excel</span>
+                                <span>Export CSV</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Table Container -->
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto max-h-[480px] overflow-y-auto">
                         <table class="w-full text-left text-xs text-slate-600">
-                            <thead class="bg-slate-50 text-slate-700 uppercase text-[10px] tracking-wider font-bold border-b">
+                            <thead class="bg-slate-50 text-slate-700 uppercase text-[10px] tracking-wider font-bold border-b sticky top-0">
                                 <tr>
                                     <th class="py-3 px-3">ID Transaksi</th>
                                     <th class="py-3 px-3">Waktu</th>
@@ -509,13 +593,70 @@
                                     <th class="py-3 px-3">Status</th>
                                 </tr>
                             </thead>
-                            <tbody id="transaction-table-body" class="divide-y divide-slate-100">
-                                <!-- Dynamic rows via JS -->
-                            </tbody>
+                            <tbody id="transaction-table-body" class="divide-y divide-slate-100"></tbody>
                         </table>
+                    </div>
+                    <p id="transaction-table-note" class="text-[11px] text-slate-400"></p>
+                </div>
+
+            </div>
+
+            <!-- SUB-TAB 5: ULASAN PELANGGAN -->
+            <div id="seller-sec-reviews" class="hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <!-- Ringkasan Rating -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="text-center space-y-1">
+                            <p class="text-xs text-slate-500 font-medium">Rating Rata-rata</p>
+                            <p id="review-avg" class="text-5xl font-extrabold text-slate-800">0.0</p>
+                            <div id="review-avg-stars" class="text-amber-400 text-lg"></div>
+                            <p id="review-count" class="text-xs text-slate-400">0 ulasan</p>
+                        </div>
+                        <div id="review-distribution" class="space-y-1.5"></div>
+                    </div>
+
+                    <!-- Statistik Respon -->
+                    <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <div>
+                            <h4 class="font-bold text-slate-800">Respon Pelanggan</h4>
+                            <p class="text-xs text-slate-500">Ringkasan kepuasan pelanggan dari ulasan bintang</p>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                                <p class="text-[10px] font-bold text-emerald-700 uppercase">Puas (4-5★)</p>
+                                <p id="review-stat-positive" class="text-xl font-extrabold text-emerald-700">0%</p>
+                            </div>
+                            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                                <p class="text-[10px] font-bold text-amber-700 uppercase">Netral (3★)</p>
+                                <p id="review-stat-neutral" class="text-xl font-extrabold text-amber-700">0%</p>
+                            </div>
+                            <div class="bg-red-50 border border-red-200 rounded-xl p-3">
+                                <p class="text-[10px] font-bold text-red-700 uppercase">Kecewa (1-2★)</p>
+                                <p id="review-stat-negative" class="text-xl font-extrabold text-red-700">0%</p>
+                            </div>
+                            <div class="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                                <p class="text-[10px] font-bold text-blue-700 uppercase">30 Hari Terakhir</p>
+                                <p id="review-stat-recent" class="text-xl font-extrabold text-blue-700">0</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-700 mb-2">Menu Paling Banyak Dipuji</p>
+                            <div id="review-top-menu" class="flex flex-wrap gap-2"></div>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Daftar Ulasan -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <h4 class="font-bold text-slate-800">Semua Ulasan</h4>
+                        <div id="review-filter" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                    <div id="review-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                    <div class="text-center">
+                        <button id="review-more-btn" onclick="showMoreReviews()" class="hidden text-xs font-bold px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600">Tampilkan lebih banyak</button>
+                    </div>
+                </div>
             </div>
 
             <!-- SUB-TAB 4: KELOLA MENU & STOK -->
@@ -697,6 +838,56 @@
 
             <div id="order-status-content" class="space-y-4">
                 <!-- Status timeline loaded dynamically via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: BERI ULASAN (PELANGGAN) -->
+    <div id="modal-review" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-2">
+                <span class="font-bold text-sm text-slate-800 flex items-center">
+                    <i class="fa-solid fa-star mr-2 text-amber-400"></i> Beri Ulasan
+                </span>
+                <button onclick="closeReviewModal()" aria-label="Tutup" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form id="form-review" onsubmit="submitReview(event)" class="space-y-3 text-xs">
+                <div class="text-center space-y-1">
+                    <p class="text-sm font-semibold text-slate-700">Bagaimana pengalamanmu di Angkringan 99?</p>
+                    <div id="review-star-input" class="flex justify-center gap-2 text-3xl py-1"></div>
+                    <p id="review-star-label" class="font-semibold text-slate-400">Pilih bintang</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label for="review-input-name" class="block font-semibold mb-1 text-slate-600">Nama</label>
+                        <input type="text" id="review-input-name" maxlength="40" placeholder="Nama kamu" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label for="review-input-menu" class="block font-semibold mb-1 text-slate-600">Menu (opsional)</label>
+                        <select id="review-input-menu" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none"></select>
+                    </div>
+                </div>
+                <div>
+                    <label for="review-input-comment" class="block font-semibold mb-1 text-slate-600">Komentar</label>
+                    <textarea id="review-input-comment" rows="3" maxlength="300" placeholder="Ceritakan pengalamanmu..." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none resize-none"></textarea>
+                </div>
+                <p id="review-error" class="hidden text-red-600 font-semibold bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Pilih jumlah bintang dulu ya
+                </p>
+                <div class="pt-3 border-t flex justify-end space-x-2">
+                    <button type="button" onclick="closeReviewModal()" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 font-bold">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-bold">Kirim Ulasan</button>
+                </div>
+            </form>
+
+            <div id="review-thanks" class="hidden text-center space-y-3 py-4">
+                <div class="w-16 h-16 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl">
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+                <p class="font-bold text-slate-800">Terima kasih atas ulasanmu!</p>
+                <p class="text-xs text-slate-500">Masukanmu membantu Angkringan 99 jadi lebih baik.</p>
+                <button onclick="closeReviewModal()" class="px-5 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs">Tutup</button>
             </div>
         </div>
     </div>
@@ -917,6 +1108,7 @@
             renderCartUI();
             renderSellerOrderBoard();
             updatePendingBadge();
+            renderCustomerRatingSummary();
             applySession();
         };
 
@@ -955,7 +1147,7 @@
 
         function switchSellerTab(tab) {
             activeSellerTab = tab;
-            const tabs = ['orders', 'pos', 'reports', 'menu'];
+            const tabs = ['orders', 'pos', 'reports', 'menu', 'reviews'];
             tabs.forEach(t => {
                 const btn = document.getElementById(`seller-tab-btn-${t}`);
                 const sec = document.getElementById(`seller-sec-${t}`);
@@ -971,6 +1163,8 @@
             if (tab === 'reports') {
                 renderTransactionReportTable();
                 initSalesChart();
+            } else if (tab === 'reviews') {
+                renderReviews();
             } else if (tab === 'menu') {
                 renderMenuInventoryTable();
             } else if (tab === 'pos') {
@@ -1241,6 +1435,10 @@
                         <p class="font-bold mb-1">Rincian Item:</p>
                         ${o.items.map(i => `<div class="flex justify-between text-slate-500"><span>${i.name} x${i.qty}</span><span>Rp ${(i.price * i.qty).toLocaleString('id-ID')}</span></div>`).join('')}
                     </div>
+
+                    <button onclick="openReviewModal()" class="w-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-brand-700 font-bold py-2 rounded-xl text-xs transition">
+                        <i class="fa-solid fa-star text-amber-400 mr-1"></i> Beri Ulasan untuk Pesanan Ini
+                    </button>
                 `;
             }
 
@@ -1426,88 +1624,681 @@
             alert("Pesanan POS Berhasil Disimpan!");
         }
 
-        // Financial Reports & Analytics
-        function renderTransactionReportTable() {
-            const tbody = document.getElementById('transaction-table-body');
-            const searchVal = document.getElementById('report-search').value.toLowerCase();
-
-            let totalRevenue = 0;
-            let totalOrdersCount = 0;
-
-            const filteredOrders = orderData.filter(o => {
-                const matchSearch = o.customerName.toLowerCase().includes(searchVal) || 
-                                    o.id.toLowerCase().includes(searchVal) || 
-                                    o.paymentMethod.toLowerCase().includes(searchVal);
-                return matchSearch;
-            });
-
-            tbody.innerHTML = filteredOrders.map(o => {
-                if (o.status === "Selesai") {
-                    totalRevenue += o.totalAmount;
-                    totalOrdersCount++;
-                }
-                return `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="py-2.5 px-3 font-bold text-slate-800">${o.id}</td>
-                        <td class="py-2.5 px-3 text-slate-500">${o.time}</td>
-                        <td class="py-2.5 px-3 font-medium text-slate-700">${o.customerName} <span class="text-[10px] text-slate-400">(${o.tableNo})</span></td>
-                        <td class="py-2.5 px-3 text-[11px] text-slate-500">${o.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</td>
-                        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${o.paymentMethod === 'QRIS' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}">${o.paymentMethod}</span></td>
-                        <td class="py-2.5 px-3 font-extrabold text-slate-800">Rp ${o.totalAmount.toLocaleString('id-ID')}</td>
-                        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${o.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${o.status}</span></td>
-                    </tr>
-                `;
-            }).join('');
-
-            // Update KPIs
-            document.getElementById('kpi-today-revenue').innerText = `Rp ${totalRevenue.toLocaleString('id-ID')}`;
-            document.getElementById('kpi-total-orders').innerText = totalOrdersCount;
-            document.getElementById('kpi-avg-order').innerText = totalOrdersCount > 0 ? `Rp ${Math.round(totalRevenue / totalOrdersCount).toLocaleString('id-ID')}` : 'Rp 0';
-            document.getElementById('kpi-estimated-profit').innerText = `Rp ${Math.round(totalRevenue * 0.35).toLocaleString('id-ID')}`;
+        // ==========================================
+        // --- 6. DATA CONTOH RANDOM (RIWAYAT & ULASAN) ---
+        // ==========================================
+        // Data dibuat acak, tapi memakai "seed" agar hasilnya tetap sama setiap halaman dibuka.
+        function seededRandom(seed) {
+            let t = seed >>> 0;
+            return function() {
+                t += 0x6D2B79F5;
+                let r = Math.imul(t ^ (t >>> 15), 1 | t);
+                r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+                return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+        const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
+        const dayKey = d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+        function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+        function escapeHTML(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
-        function initSalesChart() {
-            const ctx = document.getElementById('salesChart').getContext('2d');
-            if (salesChartInstance) salesChartInstance.destroy();
+        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const MONTHS_FULL = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const fmtDate = d => `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+        const rupiah = n => `Rp ${Math.round(n).toLocaleString('id-ID')}`;
 
-            salesChartInstance = new Chart(ctx, {
-                type: 'line',
+        const HISTORY_DAYS = 400; // ±13 bulan ke belakang
+        const RANDOM_NAMES = ["Budi", "Siti", "Agus", "Dewi", "Rizky", "Putri", "Andi", "Fajar", "Rina", "Dimas", "Nanda", "Yoga", "Ayu", "Bayu", "Citra", "Eko", "Fitri", "Galih", "Hana", "Irfan", "Joko", "Lestari", "Maya", "Nur", "Oki", "Rahmat", "Sari", "Tono", "Wahyu", "Yuni", "Arif", "Bella", "Dani", "Intan", "Kevin", "Lina", "Rudi", "Tari", "Umar", "Vina"];
+        const MENU_WEIGHTS = { 1: 10, 2: 8, 3: 9, 4: 6, 5: 7, 6: 6, 7: 7, 8: 5, 9: 9, 10: 5, 11: 10 };
+
+        function generateHistoryOrders() {
+            const result = [];
+            const now = new Date();
+            const today = startOfDay(now);
+            const weighted = [];
+            DEFAULT_MENU.forEach(m => { for (let i = 0; i < (MENU_WEIGHTS[m.id] || 5); i++) weighted.push(m); });
+
+            for (let d = HISTORY_DAYS; d >= 0; d--) {
+                const day = new Date(today);
+                day.setDate(today.getDate() - d);
+                const rnd = seededRandom(dayKey(day) * 7919);
+                const dow = day.getDay();
+                const ramai = dow === 5 || dow === 6 || dow === 0; // Jumat-Minggu lebih ramai
+                const growth = 1 + ((HISTORY_DAYS - d) / HISTORY_DAYS) * 0.35; // usaha makin berkembang
+                let count = Math.round((10 + rnd() * 10) * (ramai ? 1.4 : 1) * growth);
+                if (rnd() < 0.03) count = 0; // sesekali tutup
+
+                for (let i = 0; i < count; i++) {
+                    // Jam buka 16.00-24.00, paling ramai jam 19-21
+                    const hour = Math.min(23, 16 + Math.floor(((rnd() + rnd() + rnd()) / 3) * 8));
+                    const minute = Math.floor(rnd() * 60);
+                    const ts = new Date(day);
+                    ts.setHours(hour, minute, 0, 0);
+
+                    const items = [];
+                    const itemCount = 1 + Math.floor(rnd() * 4);
+                    for (let k = 0; k < itemCount; k++) {
+                        const m = pick(rnd, weighted);
+                        const qty = 1 + Math.floor(rnd() * (m.category === 'Minuman' ? 2 : 3));
+                        const ex = items.find(x => x.id === m.id);
+                        if (ex) ex.qty += qty;
+                        else items.push({ id: m.id, name: m.name, qty, price: m.price });
+                    }
+                    const dineIn = rnd() < 0.7;
+                    const qrisChance = 0.45 + ((HISTORY_DAYS - d) / HISTORY_DAYS) * 0.2; // QRIS makin populer
+                    const order = {
+                        id: `TRX-${String(dayKey(day)).slice(2)}-${String(i + 1).padStart(3, '0')}`,
+                        queueNo: i + 1,
+                        time: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+                        customerName: pick(rnd, RANDOM_NAMES),
+                        tableNo: dineIn ? `Meja ${String(1 + Math.floor(rnd() * 12)).padStart(2, '0')}` : 'Takeaway',
+                        serviceType: dineIn ? 'Dine-in' : 'Takeaway',
+                        paymentMethod: rnd() < qrisChance ? 'QRIS' : 'Cash',
+                        items,
+                        totalAmount: items.reduce((a, x) => a + x.price * x.qty, 0),
+                        status: 'Selesai',
+                        timestamp: ts.getTime(),
+                        isSample: true
+                    };
+                    if (order.timestamp <= now.getTime()) result.push(order); // tidak ada transaksi di masa depan
+                }
+            }
+            return result;
+        }
+
+        const REVIEW_TEXTS = {
+            5: ["{menu} enak banget, bumbunya meresap. Pasti balik lagi!", "Tempatnya nyaman buat nongkrong, harganya ramah di kantong mahasiswa.", "Pesan lewat QR praktis banget, gak perlu antre di gerobak.", "{menu} juara! Pelayanannya cepat dan ramah.", "Angkringan favorit! Suasananya hangat, cocok buat ngobrol sampai malam.", "Bayar pakai QRIS gampang, pesanan datang cepat. Mantap!", "{menu} selalu fresh dan hangat. Recommended!"],
+            4: ["{menu} enak, cuma kadang harus nunggu agak lama pas ramai.", "Harga murah, rasa oke. Tempat parkir agak sempit.", "Overall puas, {menu}-nya mantap. Semoga menunya ditambah lagi.", "Pelayanan ramah, sistem pesan online-nya membantu.", "Enak dan murah, cuma tempat duduk terbatas kalau malam minggu."],
+            3: ["Rasanya standar angkringan, gak ada yang spesial.", "{menu} lumayan, tapi porsinya agak kecil.", "Pesanan agak lama datangnya waktu ramai.", "Cukup oke, tapi tempatnya agak panas dan berasap."],
+            2: ["{menu} sudah dingin waktu disajikan.", "Nunggu pesanan lama sekali, hampir 30 menit.", "Menu yang saya mau sering habis."],
+            1: ["Pesanan saya salah dan harus menunggu lagi.", "{menu} rasanya hambar, kecewa."]
+        };
+
+        function generateReviews() {
+            const rnd = seededRandom(99099);
+            const today = startOfDay(new Date());
+            const list = [];
+            for (let i = 0; i < 140; i++) {
+                const r = rnd();
+                const rating = r < 0.46 ? 5 : r < 0.78 ? 4 : r < 0.9 ? 3 : r < 0.96 ? 2 : 1;
+                const menu = pick(rnd, DEFAULT_MENU);
+                const text = pick(rnd, REVIEW_TEXTS[rating]);
+                const ts = new Date(today);
+                ts.setDate(today.getDate() - Math.floor(rnd() * 180));
+                ts.setHours(17 + Math.floor(rnd() * 6), Math.floor(rnd() * 60));
+                list.push({
+                    id: `REV-${i + 1}`,
+                    name: pick(rnd, RANDOM_NAMES),
+                    rating,
+                    comment: text.replace('{menu}', menu.name),
+                    menu: text.includes('{menu}') ? menu.name : '',
+                    timestamp: Math.min(ts.getTime(), Date.now()),
+                    source: 'sample'
+                });
+            }
+            return list;
+        }
+
+        const HISTORY_ORDERS = generateHistoryOrders();
+        const SAMPLE_REVIEWS = generateReviews();
+
+        function getAllOrders() {
+            return [...orderData, ...HISTORY_ORDERS];
+        }
+
+        // ==========================================
+        // --- 7. LAPORAN HARIAN / MINGGUAN / BULANAN ---
+        // ==========================================
+        let reportPeriod = 'daily';  // 'daily' | 'weekly' | 'monthly'
+        let reportOffset = 0;        // 0 = periode sekarang, -1 = sebelumnya, dst
+        let recapMode = 'day';       // 'day' | 'week' | 'month'
+
+        function startOfWeek(d) {
+            const x = startOfDay(d);
+            x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); // minggu dimulai hari Senin
+            return x;
+        }
+
+        function getPeriodRange(period, offset) {
+            const now = new Date();
+            let start, end, label;
+            if (period === 'daily') {
+                start = startOfDay(now);
+                start.setDate(start.getDate() + offset);
+                end = new Date(start);
+                end.setDate(end.getDate() + 1);
+                label = `${DAYS[start.getDay()]}, ${fmtDate(start)}`;
+            } else if (period === 'weekly') {
+                start = startOfWeek(now);
+                start.setDate(start.getDate() + offset * 7);
+                end = new Date(start);
+                end.setDate(end.getDate() + 7);
+                const last = new Date(end);
+                last.setDate(last.getDate() - 1);
+                label = `${start.getDate()} ${MONTHS[start.getMonth()]} – ${fmtDate(last)}`;
+            } else {
+                start = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+                end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+                label = `${MONTHS_FULL[start.getMonth()]} ${start.getFullYear()}`;
+            }
+            return { start, end, label };
+        }
+
+        function ordersInRange(orders, start, end) {
+            const s = start.getTime(), e = end.getTime();
+            return orders.filter(o => o.timestamp >= s && o.timestamp < e);
+        }
+
+        // Hitung ringkasan penjualan (hanya transaksi berstatus Selesai)
+        function summarize(orders) {
+            const done = orders.filter(o => o.status === 'Selesai');
+            const menuMap = {};
+            let revenue = 0, items = 0, qris = 0, cash = 0;
+            done.forEach(o => {
+                revenue += o.totalAmount;
+                if (o.paymentMethod === 'QRIS') qris++; else cash++;
+                o.items.forEach(i => {
+                    items += i.qty;
+                    if (!menuMap[i.name]) menuMap[i.name] = { name: i.name, qty: 0, revenue: 0 };
+                    menuMap[i.name].qty += i.qty;
+                    menuMap[i.name].revenue += i.qty * i.price;
+                });
+            });
+            const count = done.length;
+            return {
+                revenue, count, items, qris, cash,
+                avg: count ? revenue / count : 0,
+                profit: revenue * 0.35,
+                top: Object.values(menuMap).sort((a, b) => b.qty - a.qty)
+            };
+        }
+
+        function setReportPeriod(p) {
+            reportPeriod = p;
+            reportOffset = 0;
+            renderReports();
+        }
+        function shiftReportPeriod(step) {
+            reportOffset = Math.min(0, reportOffset + step);
+            renderReports();
+        }
+        function resetReportPeriod() {
+            reportOffset = 0;
+            renderReports();
+        }
+
+        function changeBadge(el, cur, prev, prevWord) {
+            if (!prev) {
+                el.className = 'text-[10px] font-semibold text-slate-400';
+                el.innerText = 'Belum ada data pembanding';
+                return;
+            }
+            const pct = ((cur - prev) / prev) * 100;
+            const up = pct >= 0;
+            el.className = `text-[10px] font-semibold ${up ? 'text-green-600' : 'text-red-600'}`;
+            el.innerHTML = `<i class="fa-solid fa-arrow-${up ? 'up' : 'down'}"></i> ${Math.abs(pct).toFixed(1)}% vs ${prevWord}`;
+        }
+
+        function renderReports() {
+            const segBase = 'flex-1 md:flex-none px-4 py-1.5 rounded-md text-xs font-bold transition ';
+            ['daily', 'weekly', 'monthly'].forEach(p => {
+                document.getElementById(`report-period-btn-${p}`).className = segBase +
+                    (p === reportPeriod ? 'bg-white text-brand-700 shadow' : 'text-slate-500 hover:text-slate-700');
+            });
+
+            const typeText = { daily: 'Laporan Harian', weekly: 'Laporan Mingguan', monthly: 'Laporan Bulanan' };
+            const prevWord = { daily: 'hari sebelumnya', weekly: 'minggu sebelumnya', monthly: 'bulan sebelumnya' };
+            const revenueText = {
+                daily: reportOffset === 0 ? 'Omzet Hari Ini' : 'Omzet Harian',
+                weekly: reportOffset === 0 ? 'Omzet Minggu Ini' : 'Omzet Mingguan',
+                monthly: reportOffset === 0 ? 'Omzet Bulan Ini' : 'Omzet Bulanan'
+            };
+
+            const range = getPeriodRange(reportPeriod, reportOffset);
+            const prevRange = getPeriodRange(reportPeriod, reportOffset - 1);
+            // Periode yang sedang berjalan dibandingkan dengan rentang waktu yang sama di periode sebelumnya
+            if (reportOffset === 0) {
+                const elapsed = Date.now() - range.start.getTime();
+                prevRange.end = new Date(Math.min(prevRange.end.getTime(), prevRange.start.getTime() + elapsed));
+            }
+            const all = getAllOrders();
+            const cur = summarize(ordersInRange(all, range.start, range.end));
+            const prev = summarize(ordersInRange(all, prevRange.start, prevRange.end));
+
+            document.getElementById('report-period-type').innerText = typeText[reportPeriod];
+            document.getElementById('report-period-label').innerText = range.label;
+            document.getElementById('report-next-btn').disabled = reportOffset >= 0;
+
+            // KPI
+            document.getElementById('kpi-revenue-label').innerText = revenueText[reportPeriod];
+            document.getElementById('kpi-today-revenue').innerText = rupiah(cur.revenue);
+            document.getElementById('kpi-total-orders').innerText = cur.count.toLocaleString('id-ID');
+            document.getElementById('kpi-avg-order').innerText = rupiah(cur.avg);
+            document.getElementById('kpi-estimated-profit').innerText = rupiah(cur.profit);
+            document.getElementById('kpi-items-sold').innerText = `${cur.items.toLocaleString('id-ID')} porsi terjual`;
+            changeBadge(document.getElementById('kpi-revenue-change'), cur.revenue, prev.revenue, prevWord[reportPeriod]);
+            changeBadge(document.getElementById('kpi-orders-change'), cur.count, prev.count, prevWord[reportPeriod]);
+
+            const periodReviews = getAllReviews().filter(r => r.timestamp >= range.start.getTime() && r.timestamp < range.end.getTime());
+            const ratingEl = document.getElementById('kpi-rating');
+            if (periodReviews.length) {
+                const avg = periodReviews.reduce((a, r) => a + r.rating, 0) / periodReviews.length;
+                ratingEl.innerHTML = `<i class="fa-solid fa-star"></i> ${avg.toFixed(1)} dari ${periodReviews.length} ulasan`;
+            } else {
+                ratingEl.innerHTML = `<span class="text-slate-400 font-normal">Belum ada ulasan di periode ini</span>`;
+            }
+
+            // Menu terlaris
+            const topList = document.getElementById('top-menu-list');
+            const top5 = cur.top.slice(0, 5);
+            const maxQty = top5.length ? top5[0].qty : 1;
+            topList.innerHTML = top5.length ? top5.map((m, idx) => `
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="font-semibold text-slate-700"><span class="text-brand-600 font-extrabold mr-1">${idx + 1}.</span>${escapeHTML(m.name)}</span>
+                        <span class="text-slate-500">${m.qty} porsi</span>
+                    </div>
+                    <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-brand-500 to-amber-400 rounded-full" style="width:${(m.qty / maxQty) * 100}%"></div>
+                    </div>
+                </div>
+            `).join('') : `<p class="text-xs text-slate-400 italic text-center py-6">Belum ada penjualan</p>`;
+
+            // Metode pembayaran
+            const payTotal = cur.qris + cur.cash;
+            const qrisPct = payTotal ? Math.round((cur.qris / payTotal) * 100) : 0;
+            const cashPct = payTotal ? 100 - qrisPct : 0;
+            document.getElementById('pay-bar-qris').style.width = `${qrisPct}%`;
+            document.getElementById('pay-bar-cash').style.width = `${cashPct}%`;
+            document.getElementById('pay-label-qris').innerText = `${qrisPct}% (${cur.qris})`;
+            document.getElementById('pay-label-cash').innerText = `${cashPct}% (${cur.cash})`;
+
+            renderReportChart(range);
+            renderRecapTable();
+            renderTransactionTable();
+        }
+
+        function renderReportChart(range) {
+            const canvas = document.getElementById('salesChart');
+            if (typeof Chart === 'undefined' || !canvas) return;
+            const orders = ordersInRange(getAllOrders(), range.start, range.end).filter(o => o.status === 'Selesai');
+
+            let labels = [], keyOf, subtitle;
+            if (reportPeriod === 'daily') {
+                const minHour = Math.min(16, ...orders.map(o => new Date(o.timestamp).getHours()));
+                for (let h = minHour; h <= 23; h++) labels.push(`${String(h).padStart(2, '0')}:00`);
+                keyOf = o => new Date(o.timestamp).getHours() - minHour;
+                subtitle = 'Omzet dan transaksi per jam';
+            } else if (reportPeriod === 'weekly') {
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(range.start);
+                    d.setDate(d.getDate() + i);
+                    labels.push(`${DAYS[d.getDay()].slice(0, 3)} ${d.getDate()}`);
+                }
+                keyOf = o => (new Date(o.timestamp).getDay() + 6) % 7;
+                subtitle = 'Omzet dan transaksi per hari';
+            } else {
+                const daysInMonth = new Date(range.start.getFullYear(), range.start.getMonth() + 1, 0).getDate();
+                for (let i = 1; i <= daysInMonth; i++) labels.push(String(i));
+                keyOf = o => new Date(o.timestamp).getDate() - 1;
+                subtitle = 'Omzet dan transaksi per tanggal';
+            }
+
+            const revenue = labels.map(() => 0);
+            const count = labels.map(() => 0);
+            orders.forEach(o => {
+                const k = keyOf(o);
+                if (k >= 0 && k < labels.length) { revenue[k] += o.totalAmount; count[k]++; }
+            });
+
+            // Waktu yang belum terjadi dikosongkan (bukan 0) agar grafik tidak turun ke nol
+            const now = Date.now();
+            labels.forEach((_, i) => {
+                const t = new Date(range.start);
+                if (reportPeriod === 'daily') t.setHours(parseInt(labels[i]), 0, 0, 0);
+                else t.setDate(t.getDate() + i);
+                if (t.getTime() > now) { revenue[i] = null; count[i] = null; }
+            });
+            document.getElementById('chart-subtitle').innerText = `${subtitle} · ${range.label}`;
+
+            if (salesChartInstance) salesChartInstance.destroy();
+            salesChartInstance = new Chart(canvas.getContext('2d'), {
+                type: 'bar',
                 data: {
-                    labels: ['17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'],
-                    datasets: [{
-                        label: 'Omzet Penjualan (Rp)',
-                        data: [15000, 45000, 85000, 140000, 195000, 230000, 280000],
-                        borderColor: '#d97706',
-                        backgroundColor: 'rgba(217, 119, 6, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
+                    labels,
+                    datasets: [
+                        { type: 'bar', label: 'Omzet (Rp)', data: revenue, backgroundColor: 'rgba(217, 119, 6, 0.75)', borderRadius: 4, yAxisID: 'y', order: 2 },
+                        { type: 'line', label: 'Jumlah Transaksi', data: count, borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.35, pointRadius: 2, yAxisID: 'y1', order: 1 }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
                     plugins: {
-                        legend: { display: false }
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: c => c.dataset.yAxisID === 'y' ? ` Omzet: ${rupiah(c.parsed.y)}` : ` Transaksi: ${c.parsed.y}`
+                            }
+                        }
                     },
                     scales: {
-                        y: { beginAtZero: true }
+                        y: { beginAtZero: true, ticks: { callback: v => v >= 1e6 ? `${v / 1e6}jt` : v >= 1000 ? `${v / 1000}rb` : v } },
+                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { precision: 0 } }
                     }
                 }
             });
         }
 
-        function exportTransactionToCSV() {
-            let csvContent = "data:text/csv;charset=utf-8,ID Transaksi,Waktu,Pelanggan,Meja,Metode,Total,Status\n";
-            orderData.forEach(o => {
-                csvContent += `${o.id},${o.time},${o.customerName},${o.tableNo},${o.paymentMethod},${o.totalAmount},${o.status}\n`;
+        // --- Rekap Penjualan ---
+        function setRecapMode(mode) {
+            recapMode = mode;
+            renderRecapTable();
+        }
+
+        function getRecapRows() {
+            const all = getAllOrders();
+            const period = { day: 'daily', week: 'weekly', month: 'monthly' }[recapMode];
+            const n = recapMode === 'day' ? 30 : 12;
+            const rows = [];
+            for (let i = 0; i < n; i++) {
+                const r = getPeriodRange(period, -i);
+                rows.push({ label: r.label, start: r.start, end: r.end, ...summarize(ordersInRange(all, r.start, r.end)) });
+            }
+            return rows;
+        }
+
+        function renderRecapTable() {
+            const btnBase = 'px-3 py-1 rounded-md text-xs font-bold transition ';
+            ['day', 'week', 'month'].forEach(m => {
+                document.getElementById(`recap-btn-${m}`).className = btnBase +
+                    (m === recapMode ? 'bg-white text-brand-700 shadow' : 'text-slate-500 hover:text-slate-700');
             });
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Laporan_Transaksi_Angkringan99_${new Date().toISOString().slice(0,10)}.csv`);
+            const subtitles = { day: 'Rekap per hari · 30 hari terakhir', week: 'Rekap per minggu (Senin–Minggu) · 12 minggu terakhir', month: 'Rekap per bulan · 12 bulan terakhir' };
+            document.getElementById('recap-subtitle').innerText = subtitles[recapMode];
+
+            const rows = getRecapRows();
+            const maxRevenue = Math.max(1, ...rows.map(r => r.revenue));
+            document.getElementById('recap-table-body').innerHTML = rows.map(r => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap">${r.label}</td>
+                    <td class="py-2.5 px-3 text-right">${r.count.toLocaleString('id-ID')}</td>
+                    <td class="py-2.5 px-3 text-right">${r.items.toLocaleString('id-ID')}</td>
+                    <td class="py-2.5 px-3 text-right text-blue-700">${r.qris.toLocaleString('id-ID')}</td>
+                    <td class="py-2.5 px-3 text-right text-green-700">${r.cash.toLocaleString('id-ID')}</td>
+                    <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                        <div class="font-extrabold text-slate-800">${rupiah(r.revenue)}</div>
+                        <div class="h-1 bg-slate-100 rounded-full mt-1"><div class="h-full bg-brand-500 rounded-full ml-auto" style="width:${(r.revenue / maxRevenue) * 100}%"></div></div>
+                    </td>
+                    <td class="py-2.5 px-3 text-right text-emerald-700 font-semibold whitespace-nowrap">${rupiah(r.profit)}</td>
+                    <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">${r.top[0] ? `${escapeHTML(r.top[0].name)} <span class="text-slate-400">(${r.top[0].qty})</span>` : '-'}</td>
+                </tr>
+            `).join('');
+
+            const last = rows[rows.length - 1], first = rows[0];
+            const total = summarize(ordersInRange(getAllOrders(), last.start, first.end));
+            document.getElementById('recap-table-foot').innerHTML = `
+                <tr>
+                    <td class="py-3 px-3">TOTAL</td>
+                    <td class="py-3 px-3 text-right">${total.count.toLocaleString('id-ID')}</td>
+                    <td class="py-3 px-3 text-right">${total.items.toLocaleString('id-ID')}</td>
+                    <td class="py-3 px-3 text-right">${total.qris.toLocaleString('id-ID')}</td>
+                    <td class="py-3 px-3 text-right">${total.cash.toLocaleString('id-ID')}</td>
+                    <td class="py-3 px-3 text-right whitespace-nowrap">${rupiah(total.revenue)}</td>
+                    <td class="py-3 px-3 text-right whitespace-nowrap">${rupiah(total.profit)}</td>
+                    <td class="py-3 px-3 whitespace-nowrap">${total.top[0] ? escapeHTML(total.top[0].name) : '-'}</td>
+                </tr>
+            `;
+        }
+
+        // --- Riwayat Transaksi (sesuai periode terpilih) ---
+        function renderTransactionTable() {
+            const tbody = document.getElementById('transaction-table-body');
+            const searchVal = document.getElementById('report-search').value.toLowerCase();
+            const range = getPeriodRange(reportPeriod, reportOffset);
+
+            const list = ordersInRange(getAllOrders(), range.start, range.end)
+                .filter(o => o.customerName.toLowerCase().includes(searchVal) ||
+                             o.id.toLowerCase().includes(searchVal) ||
+                             o.paymentMethod.toLowerCase().includes(searchVal))
+                .sort((a, b) => b.timestamp - a.timestamp);
+            const shown = list.slice(0, 100);
+
+            document.getElementById('transaction-subtitle').innerText = `Transaksi periode ${range.label}`;
+
+            tbody.innerHTML = shown.length ? shown.map(o => {
+                const d = new Date(o.timestamp);
+                const when = reportPeriod === 'daily' ? o.time : `${d.getDate()} ${MONTHS[d.getMonth()]}, ${o.time}`;
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-2.5 px-3 font-bold text-slate-800 whitespace-nowrap">${escapeHTML(o.id)}</td>
+                        <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">${when}</td>
+                        <td class="py-2.5 px-3 font-medium text-slate-700">${escapeHTML(o.customerName)} <span class="text-[10px] text-slate-400">(${escapeHTML(o.tableNo)})</span></td>
+                        <td class="py-2.5 px-3 text-[11px] text-slate-500">${o.items.map(i => `${escapeHTML(i.name)} (x${i.qty})`).join(', ')}</td>
+                        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${o.paymentMethod === 'QRIS' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}">${o.paymentMethod}</span></td>
+                        <td class="py-2.5 px-3 font-extrabold text-slate-800 whitespace-nowrap">${rupiah(o.totalAmount)}</td>
+                        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${o.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${o.status}</span></td>
+                    </tr>
+                `;
+            }).join('') : `<tr><td colspan="7" class="py-8 text-center text-slate-400 italic">Tidak ada transaksi pada periode ini</td></tr>`;
+
+            document.getElementById('transaction-table-note').innerText = list.length > shown.length
+                ? `Menampilkan ${shown.length} transaksi terbaru dari ${list.length.toLocaleString('id-ID')}. Gunakan Export CSV untuk data lengkap.`
+                : `${list.length} transaksi`;
+        }
+
+        // Dipanggil dari bagian lain kode (nama lama tetap dipakai)
+        function renderTransactionReportTable() { renderReports(); }
+        function initSalesChart() { /* grafik sudah dibuat di renderReports() */ }
+
+        // --- Export CSV ---
+        function downloadCSV(filename, header, rows) {
+            const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+            const csv = '﻿' + [header, ...rows].map(r => r.map(q).join(';')).join('\r\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+        }
+
+        function exportTransactionToCSV() {
+            const range = getPeriodRange(reportPeriod, reportOffset);
+            const list = ordersInRange(getAllOrders(), range.start, range.end).sort((a, b) => a.timestamp - b.timestamp);
+            const rows = list.map(o => {
+                const d = new Date(o.timestamp);
+                return [o.id, fmtDate(d), o.time, o.customerName, o.tableNo, o.items.map(i => `${i.name} x${i.qty}`).join(', '), o.paymentMethod, o.totalAmount, o.status];
+            });
+            downloadCSV(`Transaksi_${reportPeriod}_${range.label.replace(/[^\w]+/g, '_')}.csv`,
+                ['ID Transaksi', 'Tanggal', 'Jam', 'Pelanggan', 'Meja', 'Detail Pesanan', 'Metode', 'Total', 'Status'], rows);
+        }
+
+        function exportRecapToCSV() {
+            const rows = getRecapRows().map(r => [r.label, r.count, r.items, r.qris, r.cash, r.revenue, Math.round(r.profit), r.top[0] ? r.top[0].name : '-']);
+            const name = { day: 'Harian', week: 'Mingguan', month: 'Bulanan' }[recapMode];
+            downloadCSV(`Rekap_Penjualan_${name}_Angkringan99_${new Date().toISOString().slice(0, 10)}.csv`,
+                ['Periode', 'Transaksi', 'Porsi Terjual', 'QRIS', 'Tunai', 'Omzet', 'Estimasi Laba', 'Menu Terlaris'], rows);
+        }
+
+        // ==========================================
+        // --- 8. ULASAN & RESPON PELANGGAN ---
+        // ==========================================
+        let reviewFilter = 0;     // 0 = semua bintang
+        let reviewShowCount = 12;
+        let reviewRatingInput = 0;
+        const STAR_LABELS = ['Pilih bintang', 'Sangat Kecewa', 'Kurang Puas', 'Biasa Saja', 'Puas', 'Sangat Puas!'];
+
+        function loadUserReviews() {
+            try { return JSON.parse(localStorage.getItem('angkringan_reviews')) || []; } catch { return []; }
+        }
+        function getAllReviews() {
+            return [...loadUserReviews(), ...SAMPLE_REVIEWS].sort((a, b) => b.timestamp - a.timestamp);
+        }
+
+        function starsHTML(rating) {
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                if (rating >= i) html += '<i class="fa-solid fa-star"></i>';
+                else if (rating >= i - 0.5) html += '<i class="fa-solid fa-star-half-stroke"></i>';
+                else html += '<i class="fa-regular fa-star"></i>';
+            }
+            return html;
+        }
+
+        function timeAgo(ts) {
+            const days = Math.floor((startOfDay(new Date()) - startOfDay(new Date(ts))) / 86400000);
+            if (days <= 0) return 'Hari ini';
+            if (days === 1) return 'Kemarin';
+            if (days < 30) return `${days} hari lalu`;
+            return fmtDate(new Date(ts));
+        }
+
+        function setReviewFilter(n) {
+            reviewFilter = n;
+            reviewShowCount = 12;
+            renderReviews();
+        }
+        function showMoreReviews() {
+            reviewShowCount += 12;
+            renderReviews();
+        }
+
+        function renderReviews() {
+            const all = getAllReviews();
+            const total = all.length;
+            const avg = total ? all.reduce((a, r) => a + r.rating, 0) / total : 0;
+            const dist = [0, 0, 0, 0, 0, 0];
+            all.forEach(r => dist[r.rating]++);
+
+            document.getElementById('review-avg').innerText = avg.toFixed(1);
+            document.getElementById('review-avg-stars').innerHTML = starsHTML(Math.round(avg * 2) / 2);
+            document.getElementById('review-count').innerText = `${total} ulasan`;
+            document.getElementById('review-distribution').innerHTML = [5, 4, 3, 2, 1].map(s => `
+                <button onclick="setReviewFilter(${s})" class="w-full flex items-center gap-2 text-xs group">
+                    <span class="w-6 text-slate-600 font-semibold">${s}<i class="fa-solid fa-star text-amber-400 text-[9px] ml-0.5"></i></span>
+                    <span class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden"><span class="block h-full bg-amber-400 rounded-full group-hover:bg-amber-500" style="width:${total ? (dist[s] / total) * 100 : 0}%"></span></span>
+                    <span class="w-8 text-right text-slate-400">${dist[s]}</span>
+                </button>
+            `).join('');
+
+            const pct = n => total ? `${Math.round((n / total) * 100)}%` : '0%';
+            document.getElementById('review-stat-positive').innerText = pct(dist[4] + dist[5]);
+            document.getElementById('review-stat-neutral').innerText = pct(dist[3]);
+            document.getElementById('review-stat-negative').innerText = pct(dist[1] + dist[2]);
+            const monthAgo = Date.now() - 30 * 86400000;
+            document.getElementById('review-stat-recent').innerText = `${all.filter(r => r.timestamp >= monthAgo).length} ulasan`;
+
+            const praised = {};
+            all.filter(r => r.rating >= 4 && r.menu).forEach(r => { praised[r.menu] = (praised[r.menu] || 0) + 1; });
+            const praisedList = Object.entries(praised).sort((a, b) => b[1] - a[1]).slice(0, 6);
+            document.getElementById('review-top-menu').innerHTML = praisedList.length ? praisedList.map(([name, n]) => `
+                <span class="text-xs bg-amber-50 border border-amber-200 text-brand-700 font-semibold px-2.5 py-1 rounded-full">${escapeHTML(name)} <span class="text-amber-600">· ${n}</span></span>
+            `).join('') : `<span class="text-xs text-slate-400">Belum ada data</span>`;
+
+            // Filter bintang
+            const filterBase = 'text-xs font-bold px-3 py-1 rounded-full border transition ';
+            document.getElementById('review-filter').innerHTML = [0, 5, 4, 3, 2, 1].map(s => `
+                <button onclick="setReviewFilter(${s})" class="${filterBase}${reviewFilter === s ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
+                    ${s === 0 ? 'Semua' : `${s} <i class="fa-solid fa-star text-[9px]"></i>`}
+                </button>
+            `).join('');
+
+            const filtered = reviewFilter ? all.filter(r => r.rating === reviewFilter) : all;
+            const shown = filtered.slice(0, reviewShowCount);
+            const colors = ['bg-amber-500', 'bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-rose-500', 'bg-cyan-600'];
+            document.getElementById('review-list').innerHTML = shown.length ? shown.map(r => `
+                <div class="border border-slate-200 rounded-xl p-3.5 space-y-2 ${r.source === 'user' ? 'bg-amber-50/50' : ''}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full ${colors[r.name.length % colors.length]} text-white flex items-center justify-center text-xs font-bold">${escapeHTML(r.name.charAt(0).toUpperCase())}</div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">${escapeHTML(r.name)} ${r.source === 'user' ? '<span class="ml-1 text-[9px] bg-brand-600 text-white px-1.5 py-0.5 rounded">BARU</span>' : ''}</p>
+                                <p class="text-amber-400 text-[11px]">${starsHTML(r.rating)}</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-slate-400">${timeAgo(r.timestamp)}</span>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">${escapeHTML(r.comment) || '<span class="italic text-slate-400">Tanpa komentar</span>'}</p>
+                    ${r.menu ? `<span class="inline-block text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full"><i class="fa-solid fa-utensils mr-1"></i>${escapeHTML(r.menu)}</span>` : ''}
+                </div>
+            `).join('') : `<p class="col-span-full text-center text-xs text-slate-400 italic py-8">Belum ada ulasan dengan rating ini</p>`;
+
+            document.getElementById('review-more-btn').classList.toggle('hidden', filtered.length <= reviewShowCount);
+        }
+
+        // Ringkasan rating di halaman pelanggan
+        function renderCustomerRatingSummary() {
+            const el = document.getElementById('customer-rating-summary');
+            if (!el) return;
+            const all = getAllReviews();
+            const avg = all.length ? all.reduce((a, r) => a + r.rating, 0) / all.length : 0;
+            el.innerHTML = `<span class="text-amber-300">${starsHTML(Math.round(avg * 2) / 2)}</span> <b class="text-white">${avg.toFixed(1)}</b> <span class="text-amber-200/80">(${all.length} ulasan)</span>`;
+        }
+
+        // --- Form ulasan pelanggan ---
+        function openReviewModal() {
+            closeOrderStatusModal();
+            document.getElementById('form-review').reset();
+            document.getElementById('form-review').classList.remove('hidden');
+            document.getElementById('review-thanks').classList.add('hidden');
+            document.getElementById('review-error').classList.add('hidden');
+            const sel = document.getElementById('review-input-menu');
+            sel.innerHTML = '<option value="">— Tidak memilih menu —</option>' +
+                menuData.map(m => `<option value="${escapeHTML(m.name)}">${escapeHTML(m.name)}</option>`).join('');
+            if (activeOrderForStatus && activeOrderForStatus.customerName !== 'Pelanggan Anonim') {
+                document.getElementById('review-input-name').value = activeOrderForStatus.customerName;
+            }
+            setReviewRating(0);
+            document.getElementById('modal-review').classList.remove('hidden');
+        }
+
+        function closeReviewModal() {
+            document.getElementById('modal-review').classList.add('hidden');
+        }
+
+        function setReviewRating(n) {
+            reviewRatingInput = n;
+            document.getElementById('review-star-input').innerHTML = [1, 2, 3, 4, 5].map(i => `
+                <button type="button" onclick="setReviewRating(${i})" aria-label="${i} bintang"
+                    class="transition hover:scale-110 ${i <= n ? 'text-amber-400' : 'text-slate-300'}">
+                    <i class="${i <= n ? 'fa-solid' : 'fa-regular'} fa-star"></i>
+                </button>
+            `).join('');
+            const label = document.getElementById('review-star-label');
+            label.innerText = STAR_LABELS[n];
+            label.className = `font-semibold ${n ? 'text-brand-700' : 'text-slate-400'}`;
+        }
+
+        function submitReview(e) {
+            e.preventDefault();
+            if (!reviewRatingInput) {
+                document.getElementById('review-error').classList.remove('hidden');
+                return;
+            }
+            const review = {
+                id: `REV-U${Date.now()}`,
+                name: document.getElementById('review-input-name').value.trim().slice(0, 40) || 'Pelanggan',
+                rating: reviewRatingInput,
+                comment: document.getElementById('review-input-comment').value.trim().slice(0, 300),
+                menu: document.getElementById('review-input-menu').value,
+                timestamp: Date.now(),
+                source: 'user'
+            };
+            const list = loadUserReviews();
+            list.unshift(review);
+            try { localStorage.setItem('angkringan_reviews', JSON.stringify(list)); } catch {}
+
+            document.getElementById('form-review').classList.add('hidden');
+            document.getElementById('review-thanks').classList.remove('hidden');
+            renderCustomerRatingSummary();
+            renderReviews();
         }
 
         // Menu Inventory Management
