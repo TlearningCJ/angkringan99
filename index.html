@@ -81,19 +81,29 @@
                     </div>
                 </div>
 
-                <!-- Role Switcher Tabs -->
-                <div class="flex items-center bg-stone-800 p-1 rounded-xl border border-stone-700">
-                    <button id="tab-btn-customer" onclick="switchRole('customer')" 
-                        class="flex items-center space-x-2 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 bg-brand-500 text-white shadow">
-                        <i class="fa-solid fa-utensils"></i>
-                        <span>Modul Pelanggan</span>
-                    </button>
-                    <button id="tab-btn-seller" onclick="switchRole('seller')" 
-                        class="flex items-center space-x-2 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 text-stone-400 hover:text-white">
-                        <i class="fa-solid fa-store"></i>
-                        <span>Modul Penjual / Kasir</span>
-                        <span id="badge-pending-count" class="hidden ml-1 px-1.5 py-0.5 text-[10px] bg-red-500 text-white font-bold rounded-full animate-pulse">0</span>
-                    </button>
+                <div class="flex items-center gap-2">
+                    <!-- Role Switcher Tabs (hanya tampil saat login sebagai kasir) -->
+                    <div id="role-switcher" class="hidden items-center bg-stone-800 p-1 rounded-xl border border-stone-700">
+                        <button id="tab-btn-customer" onclick="switchRole('customer')"
+                            class="flex items-center space-x-2 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 bg-brand-500 text-white shadow">
+                            <i class="fa-solid fa-utensils"></i>
+                            <span class="hidden sm:inline">Modul Pelanggan</span>
+                        </button>
+                        <button id="tab-btn-seller" onclick="switchRole('seller')"
+                            class="flex items-center space-x-2 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 text-stone-400 hover:text-white">
+                            <i class="fa-solid fa-store"></i>
+                            <span class="hidden sm:inline">Modul Penjual / Kasir</span>
+                            <span id="badge-pending-count" class="hidden ml-1 px-1.5 py-0.5 text-[10px] bg-red-500 text-white font-bold rounded-full animate-pulse">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Info Sesi Pengguna -->
+                    <div id="session-chip" class="hidden items-center gap-2 bg-stone-800 border border-stone-700 rounded-xl pl-3 pr-1 py-1">
+                        <span id="session-label" class="text-xs text-amber-200 font-medium whitespace-nowrap"></span>
+                        <button id="session-action-btn" onclick="logout()"
+                            class="text-xs font-bold px-2.5 py-1 rounded-lg bg-stone-700 hover:bg-stone-600 text-white transition whitespace-nowrap">
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -558,6 +568,78 @@
     <!-- MODALS SECTION -->
     <!-- ========================================== -->
 
+    <!-- LAYAR MASUK: MODE TAMU (PELANGGAN) / LOGIN KASIR -->
+    <div id="login-screen" class="fixed inset-0 z-[60] bg-gradient-to-br from-brand-900 via-stone-900 to-brand-dark flex items-center justify-center p-4 overflow-y-auto">
+        <div class="w-full max-w-3xl space-y-6 py-6">
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-brand-500 to-amber-300 flex items-center justify-center text-brand-900 font-extrabold text-3xl shadow-lg">99</div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-amber-50">Angkringan 99 Mas Al</h1>
+                <p class="text-sm text-amber-200/70">Silakan pilih cara masuk</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Kartu Pelanggan (Guest) -->
+                <div class="bg-white rounded-2xl p-6 shadow-2xl flex flex-col justify-between space-y-5">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 text-brand-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-utensils"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-lg text-slate-800">Saya Pelanggan</h2>
+                            <p class="text-xs text-slate-500 mt-1">Langsung pesan menu tanpa perlu daftar atau login. Cukup isi nama dan nomor meja saat checkout.</p>
+                        </div>
+                    </div>
+                    <button onclick="enterAsGuest()" class="w-full bg-gradient-to-r from-brand-600 to-amber-600 hover:from-brand-700 hover:to-amber-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-user"></i>
+                        <span>Masuk sebagai Tamu</span>
+                    </button>
+                </div>
+
+                <!-- Kartu Login Kasir -->
+                <div class="bg-white rounded-2xl p-6 shadow-2xl space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-cash-register"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-lg text-slate-800">Login Kasir</h2>
+                            <p class="text-xs text-slate-500">Khusus penjual / admin</p>
+                        </div>
+                    </div>
+                    <form id="form-login-kasir" onsubmit="handleKasirLogin(event)" class="space-y-3 text-xs">
+                        <div>
+                            <label for="login-username" class="block font-semibold mb-1 text-slate-600">Username</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-user absolute left-3 top-3 text-slate-400"></i>
+                                <input type="text" id="login-username" autocomplete="username" required placeholder="Masukkan username"
+                                    class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="login-password" class="block font-semibold mb-1 text-slate-600">Password</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-lock absolute left-3 top-3 text-slate-400"></i>
+                                <input type="password" id="login-password" autocomplete="current-password" required placeholder="Masukkan password"
+                                    class="w-full pl-9 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                                <button type="button" onclick="togglePasswordVisibility()" aria-label="Tampilkan password"
+                                    class="absolute right-2 top-1.5 w-7 h-7 text-slate-400 hover:text-slate-600">
+                                    <i id="toggle-password-icon" class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p id="login-error" class="hidden text-red-600 font-semibold bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                            <i class="fa-solid fa-circle-exclamation mr-1"></i> Username atau password salah
+                        </p>
+                        <button type="submit" class="w-full bg-stone-800 hover:bg-stone-900 text-white font-bold py-3 rounded-xl shadow transition flex items-center justify-center gap-2 text-sm">
+                            <i class="fa-solid fa-right-to-bracket"></i>
+                            <span>Masuk sebagai Kasir</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL 1: QRIS PAYMENT SIMULATION -->
     <div id="modal-qris" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 text-center shadow-2xl animate-fade-in">
@@ -737,6 +819,97 @@
             localStorage.setItem('angkringan_orders', JSON.stringify(orderData));
         }
 
+        // --- AUTENTIKASI: MODE TAMU & LOGIN KASIR ---
+        // Catatan: ini login sederhana di sisi browser (untuk keperluan tugas/demo).
+        const KASIR_ACCOUNT = { username: "admin", password: "admin123" };
+        const SESSION_KEY = "angkringan_session"; // 'guest' atau 'kasir'
+
+        function getSession() {
+            try { return sessionStorage.getItem(SESSION_KEY); } catch { return null; }
+        }
+        function setSession(value) {
+            try {
+                if (value) sessionStorage.setItem(SESSION_KEY, value);
+                else sessionStorage.removeItem(SESSION_KEY);
+            } catch {}
+        }
+
+        function enterAsGuest() {
+            setSession('guest');
+            applySession();
+        }
+
+        function handleKasirLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+
+            if (username === KASIR_ACCOUNT.username && password === KASIR_ACCOUNT.password) {
+                errorEl.classList.add('hidden');
+                document.getElementById('form-login-kasir').reset();
+                setSession('kasir');
+                applySession();
+                switchRole('seller');
+            } else {
+                errorEl.classList.remove('hidden');
+                document.getElementById('login-password').value = '';
+                document.getElementById('login-password').focus();
+            }
+        }
+
+        function logout() {
+            setSession(null);
+            switchRole('customer', true);
+            applySession();
+        }
+
+        function showLoginScreen() {
+            document.getElementById('login-error').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('login-password');
+            const icon = document.getElementById('toggle-password-icon');
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            icon.className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+        }
+
+        // Atur tampilan sesuai sesi aktif
+        function applySession() {
+            const session = getSession();
+            const loginScreen = document.getElementById('login-screen');
+            const switcher = document.getElementById('role-switcher');
+            const chip = document.getElementById('session-chip');
+            const label = document.getElementById('session-label');
+            const actionBtn = document.getElementById('session-action-btn');
+
+            if (!session) {
+                loginScreen.classList.remove('hidden');
+                switcher.classList.replace('flex', 'hidden');
+                chip.classList.replace('flex', 'hidden');
+                return;
+            }
+
+            loginScreen.classList.add('hidden');
+            chip.classList.replace('hidden', 'flex');
+
+            if (session === 'kasir') {
+                switcher.classList.replace('hidden', 'flex');
+                label.innerHTML = '<i class="fa-solid fa-user-shield mr-1"></i><span class="hidden sm:inline">Kasir: </span>admin';
+                actionBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket sm:mr-1"></i><span class="hidden sm:inline">Keluar</span>';
+                actionBtn.onclick = logout;
+            } else {
+                switcher.classList.replace('flex', 'hidden');
+                label.innerHTML = '<i class="fa-solid fa-user mr-1"></i>Tamu';
+                actionBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket sm:mr-1"></i><span class="hidden sm:inline">Keluar</span>';
+                actionBtn.onclick = logout;
+                if (activeRole !== 'customer') switchRole('customer', true);
+            }
+        }
+
         // Initialize App
         window.onload = function() {
             renderCategoryFilters();
@@ -744,10 +917,16 @@
             renderCartUI();
             renderSellerOrderBoard();
             updatePendingBadge();
+            applySession();
         };
 
         // --- 3. ROLE & TAB NAVIGATION ---
-        function switchRole(role) {
+        function switchRole(role, force) {
+            // Modul kasir hanya bisa dibuka setelah login kasir
+            if (role === 'seller' && getSession() !== 'kasir') {
+                showLoginScreen();
+                return;
+            }
             activeRole = role;
             const custMod = document.getElementById('module-customer');
             const sellMod = document.getElementById('module-seller');
