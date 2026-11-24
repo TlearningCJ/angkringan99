@@ -474,7 +474,8 @@
                         <div>
                             <p class="text-xs text-slate-500 font-medium">Rata-rata Transaksi</p>
                             <h4 id="kpi-avg-order" class="text-xl font-extrabold text-slate-800 mt-0.5">Rp 0</h4>
-                            <span id="kpi-items-sold" class="text-[10px] text-slate-400"></span>
+                            <span id="kpi-items-sold" class="block text-[10px] text-slate-400"></span>
+                            <span id="kpi-rating" class="block text-[10px] text-amber-600 font-semibold"></span>
                         </div>
                         <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 text-xl">
                             <i class="fa-solid fa-chart-pie"></i>
@@ -483,13 +484,37 @@
 
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-slate-500 font-medium">Estimasi Laba Bersih (~35%)</p>
+                            <p class="text-xs text-slate-500 font-medium">Laba Bersih <span id="kpi-net-margin" class="text-slate-400"></span></p>
                             <h4 id="kpi-estimated-profit" class="text-xl font-extrabold text-emerald-600 mt-0.5">Rp 0</h4>
-                            <span id="kpi-rating" class="text-[10px] text-amber-600 font-semibold"></span>
+                            <span id="kpi-profit-change" class="text-[10px] font-semibold"></span>
                         </div>
                         <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 text-xl">
                             <i class="fa-solid fa-money-bill-trend-up"></i>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Laporan Laba Rugi -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex justify-between items-start gap-3">
+                            <div>
+                                <h4 class="font-bold text-slate-800">Laporan Laba Rugi</h4>
+                                <p id="pl-subtitle" class="text-xs text-slate-500">Perhitungan laba periode terpilih</p>
+                            </div>
+                            <button onclick="openCostModal()" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center gap-1.5 whitespace-nowrap">
+                                <i class="fa-solid fa-sliders"></i> Atur Biaya
+                            </button>
+                        </div>
+                        <div id="pl-statement" class="text-sm"></div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <div>
+                            <h4 class="font-bold text-slate-800">Laba Kotor per Menu</h4>
+                            <p class="text-xs text-slate-500">Omzet menu dikurangi HPP bahan baku</p>
+                        </div>
+                        <div id="pl-menu-list" class="space-y-3"></div>
                     </div>
                 </div>
 
@@ -554,7 +579,8 @@
                                     <th class="py-3 px-3 text-right">QRIS</th>
                                     <th class="py-3 px-3 text-right">Tunai</th>
                                     <th class="py-3 px-3 text-right">Omzet</th>
-                                    <th class="py-3 px-3 text-right">Est. Laba</th>
+                                    <th class="py-3 px-3 text-right">HPP</th>
+                                    <th class="py-3 px-3 text-right">Laba Bersih</th>
                                     <th class="py-3 px-3">Menu Terlaris</th>
                                 </tr>
                             </thead>
@@ -680,7 +706,9 @@
                                 <tr>
                                     <th class="py-3 px-3">Menu</th>
                                     <th class="py-3 px-3">Kategori</th>
-                                    <th class="py-3 px-3">Harga</th>
+                                    <th class="py-3 px-3">Harga Jual</th>
+                                    <th class="py-3 px-3">HPP / Modal</th>
+                                    <th class="py-3 px-3">Margin</th>
                                     <th class="py-3 px-3">Status Stok</th>
                                     <th class="py-3 px-3 text-right">Aksi</th>
                                 </tr>
@@ -887,6 +915,38 @@
         </div>
     </div>
 
+    <!-- MODAL 5: PENGATURAN BIAYA (KASIR) -->
+    <div id="modal-costs" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-2">
+                <span class="font-bold text-sm text-slate-800 flex items-center">
+                    <i class="fa-solid fa-sliders mr-2 text-brand-600"></i> Pengaturan Biaya Usaha
+                </span>
+                <button onclick="closeCostModal()" aria-label="Tutup" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-costs" onsubmit="saveCostSettings(event)" class="space-y-3 text-xs">
+                <p class="text-slate-500">Biaya operasional dihitung <b>per hari</b>. Untuk laporan mingguan/bulanan, biaya dikalikan jumlah hari.</p>
+                <div id="cost-inputs" class="space-y-2"></div>
+                <div class="flex justify-between items-center bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 font-bold text-slate-700">
+                    <span>Total biaya operasional / hari</span>
+                    <span id="cost-total-preview">Rp 0</span>
+                </div>
+                <div class="pt-2 border-t">
+                    <label for="cost-input-mdr" class="block font-semibold mb-1 text-slate-600">Biaya layanan QRIS / MDR (%)</label>
+                    <input type="number" id="cost-input-mdr" min="0" max="10" step="0.01" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                    <p class="text-[10px] text-slate-400 mt-1">Dipotong dari setiap transaksi QRIS. Usaha mikro umumnya 0,3%.</p>
+                </div>
+                <div class="pt-3 border-t flex justify-between">
+                    <button type="button" onclick="resetCostSettings()" class="px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-100 font-bold">Kembalikan Default</button>
+                    <div class="space-x-2">
+                        <button type="button" onclick="closeCostModal()" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 font-bold">Batal</button>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-bold">Simpan</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL 3: ADD/EDIT MENU ITEM -->
     <div id="modal-add-menu" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -911,9 +971,13 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block font-semibold mb-1 text-slate-600">Harga (Rp)</label>
-                        <input type="number" id="menu-input-price" required placeholder="3000" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <label class="block font-semibold mb-1 text-slate-600">Harga Jual (Rp)</label>
+                        <input type="number" id="menu-input-price" required min="1" placeholder="3000" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
                     </div>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600">HPP / Modal Bahan per Porsi (Rp)</label>
+                    <input type="number" id="menu-input-cost" min="0" placeholder="Contoh: 1600 (kosongkan = otomatis 55% harga jual)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-500 outline-none">
                 </div>
                 <div>
                     <label class="block font-semibold mb-1 text-slate-600">Deskripsi Singkat</label>
@@ -990,6 +1054,39 @@
 
         // --- 2. GLOBAL STATE ---
         let menuData = JSON.parse(localStorage.getItem('angkringan_menu')) || DEFAULT_MENU;
+
+        // --- HPP (modal bahan per porsi) & BIAYA USAHA ---
+        const DEFAULT_COSTS = { 1: 2400, 2: 2300, 3: 1600, 4: 2000, 5: 2300, 6: 1900, 7: 1000, 8: 700, 9: 1800, 10: 1700, 11: 1000 };
+        // Pastikan setiap menu punya HPP (termasuk data lama di localStorage)
+        menuData.forEach(m => {
+            if (typeof m.cost !== 'number') m.cost = DEFAULT_COSTS[m.id] ?? Math.round(m.price * 0.55);
+        });
+
+        function getItemCost(item) {
+            const m = menuData.find(x => x.id === item.id);
+            if (m && typeof m.cost === 'number') return m.cost;
+            if (DEFAULT_COSTS[item.id] != null) return DEFAULT_COSTS[item.id];
+            return Math.round(item.price * 0.55);
+        }
+
+        const DEFAULT_OPEX = [
+            { key: 'sewa', label: 'Sewa tempat', amount: 20000 },
+            { key: 'bahanbakar', label: 'Arang & gas', amount: 25000 },
+            { key: 'listrik', label: 'Listrik & air', amount: 10000 },
+            { key: 'kemasan', label: 'Kemasan & plastik', amount: 10000 },
+            { key: 'gaji', label: 'Gaji karyawan', amount: 50000 }
+        ];
+        const DEFAULT_MDR = 0.3; // persen
+
+        function loadCostSettings() {
+            try {
+                const s = JSON.parse(localStorage.getItem('angkringan_costs'));
+                if (s && Array.isArray(s.opex) && typeof s.mdr === 'number') return s;
+            } catch {}
+            return { opex: DEFAULT_OPEX.map(o => ({ ...o })), mdr: DEFAULT_MDR };
+        }
+        let costSettings = loadCostSettings();
+        const dailyOpex = () => costSettings.opex.reduce((a, o) => a + (Number(o.amount) || 0), 0);
         let orderData = JSON.parse(localStorage.getItem('angkringan_orders')) || DEFAULT_ORDERS;
         let customerCart = [];
         let posCart = [];
@@ -1787,26 +1884,50 @@
             return orders.filter(o => o.timestamp >= s && o.timestamp < e);
         }
 
-        // Hitung ringkasan penjualan (hanya transaksi berstatus Selesai)
-        function summarize(orders) {
+        // Jumlah hari operasional dalam rentang (untuk biaya operasional harian).
+        // Hari ini baru dihitung setelah jam buka (16.00).
+        const OPENING_HOUR = 16;
+        function daysElapsed(start, end) {
+            const now = new Date();
+            if (end.getTime() <= now.getTime()) return Math.max(0, Math.round((end - start) / 86400000));
+            let days = Math.round((startOfDay(now) - start) / 86400000);
+            if (now.getHours() >= OPENING_HOUR) days += 1;
+            return Math.max(0, days);
+        }
+
+        // Hitung ringkasan penjualan & laba (hanya transaksi berstatus Selesai)
+        // start/end dipakai untuk menghitung biaya operasional per hari
+        function summarize(orders, start, end, daysOverride) {
             const done = orders.filter(o => o.status === 'Selesai');
             const menuMap = {};
-            let revenue = 0, items = 0, qris = 0, cash = 0;
+            let revenue = 0, items = 0, qris = 0, cash = 0, qrisRevenue = 0, hpp = 0;
             done.forEach(o => {
                 revenue += o.totalAmount;
-                if (o.paymentMethod === 'QRIS') qris++; else cash++;
+                if (o.paymentMethod === 'QRIS') { qris++; qrisRevenue += o.totalAmount; } else cash++;
                 o.items.forEach(i => {
+                    const cost = getItemCost(i) * i.qty;
                     items += i.qty;
-                    if (!menuMap[i.name]) menuMap[i.name] = { name: i.name, qty: 0, revenue: 0 };
+                    hpp += cost;
+                    if (!menuMap[i.name]) menuMap[i.name] = { name: i.name, qty: 0, revenue: 0, cost: 0 };
                     menuMap[i.name].qty += i.qty;
                     menuMap[i.name].revenue += i.qty * i.price;
+                    menuMap[i.name].cost += cost;
                 });
             });
             const count = done.length;
+            const grossProfit = revenue - hpp;
+            const days = daysOverride ?? (start && end ? daysElapsed(start, end) : 0);
+            const opexPerDay = dailyOpex();
+            const opex = days * opexPerDay;
+            const mdr = qrisRevenue * (costSettings.mdr / 100);
+            const netProfit = grossProfit - opex - mdr;
             return {
-                revenue, count, items, qris, cash,
+                revenue, count, items, qris, cash, qrisRevenue,
                 avg: count ? revenue / count : 0,
-                profit: revenue * 0.35,
+                hpp, grossProfit, days, opexPerDay, opex, mdr, netProfit,
+                profit: netProfit,
+                grossMargin: revenue ? (grossProfit / revenue) * 100 : 0,
+                netMargin: revenue ? (netProfit / revenue) * 100 : 0,
                 top: Object.values(menuMap).sort((a, b) => b.qty - a.qty)
             };
         }
@@ -1860,8 +1981,10 @@
                 prevRange.end = new Date(Math.min(prevRange.end.getTime(), prevRange.start.getTime() + elapsed));
             }
             const all = getAllOrders();
-            const cur = summarize(ordersInRange(all, range.start, range.end));
-            const prev = summarize(ordersInRange(all, prevRange.start, prevRange.end));
+            const cur = summarize(ordersInRange(all, range.start, range.end), range.start, range.end);
+            // Periode berjalan: pembanding memakai jumlah hari operasional yang sama
+            const prev = summarize(ordersInRange(all, prevRange.start, prevRange.end), prevRange.start, prevRange.end,
+                reportOffset === 0 ? cur.days : undefined);
 
             document.getElementById('report-period-type').innerText = typeText[reportPeriod];
             document.getElementById('report-period-label').innerText = range.label;
@@ -1872,7 +1995,11 @@
             document.getElementById('kpi-today-revenue').innerText = rupiah(cur.revenue);
             document.getElementById('kpi-total-orders').innerText = cur.count.toLocaleString('id-ID');
             document.getElementById('kpi-avg-order').innerText = rupiah(cur.avg);
-            document.getElementById('kpi-estimated-profit').innerText = rupiah(cur.profit);
+            const profitEl = document.getElementById('kpi-estimated-profit');
+            profitEl.innerText = rupiah(cur.netProfit);
+            profitEl.className = `text-xl font-extrabold mt-0.5 ${cur.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`;
+            document.getElementById('kpi-net-margin').innerText = cur.revenue ? `(${cur.netMargin.toFixed(1)}%)` : '';
+            changeBadge(document.getElementById('kpi-profit-change'), cur.netProfit, prev.netProfit, prevWord[reportPeriod]);
             document.getElementById('kpi-items-sold').innerText = `${cur.items.toLocaleString('id-ID')} porsi terjual`;
             changeBadge(document.getElementById('kpi-revenue-change'), cur.revenue, prev.revenue, prevWord[reportPeriod]);
             changeBadge(document.getElementById('kpi-orders-change'), cur.count, prev.count, prevWord[reportPeriod]);
@@ -1911,9 +2038,105 @@
             document.getElementById('pay-label-qris').innerText = `${qrisPct}% (${cur.qris})`;
             document.getElementById('pay-label-cash').innerText = `${cashPct}% (${cur.cash})`;
 
+            renderProfitLoss(cur, range);
             renderReportChart(range);
             renderRecapTable();
             renderTransactionTable();
+        }
+
+        // --- Laporan Laba Rugi ---
+        function renderProfitLoss(s, range) {
+            const pct = v => `${v.toFixed(1)}%`;
+            const row = (label, value, opts = {}) => `
+                <div class="flex justify-between items-center py-1.5 ${opts.indent ? 'pl-4 text-slate-500 text-xs' : ''} ${opts.cls || ''}">
+                    <span>${label}</span>
+                    <span class="whitespace-nowrap ${opts.valueCls || ''}">${value}</span>
+                </div>`;
+            const minus = v => `(${rupiah(v)})`;
+
+            const opexDetail = costSettings.opex
+                .filter(o => Number(o.amount) > 0)
+                .map(o => row(`${escapeHTML(o.label)} <span class="text-slate-400">· ${s.days} hari × ${rupiah(o.amount)}</span>`, minus(o.amount * s.days), { indent: true }))
+                .join('');
+
+            document.getElementById('pl-subtitle').innerText = s.days === 0
+                ? `${range.label} · belum ada biaya operasional (dihitung mulai jam buka ${OPENING_HOUR}.00)`
+                : `${range.label} · ${s.days} hari operasional${reportOffset === 0 && reportPeriod !== 'daily' ? ' (berjalan)' : ''}`;
+
+            document.getElementById('pl-statement').innerHTML = `
+                <div class="divide-y divide-slate-100">
+                    ${row('<b>Pendapatan (Omzet)</b>', `<b>${rupiah(s.revenue)}</b>`)}
+                    ${row('Harga Pokok Penjualan (HPP bahan baku)', minus(s.hpp), { valueCls: 'text-red-600' })}
+                    ${row(`<b>Laba Kotor</b> <span class="text-xs text-slate-400">margin ${pct(s.grossMargin)}</span>`, `<b>${rupiah(s.grossProfit)}</b>`, { cls: 'bg-slate-50 px-2 rounded' })}
+                    ${row('Biaya Operasional', minus(s.opex), { valueCls: 'text-red-600' })}
+                    ${opexDetail}
+                    ${row(`Biaya Layanan QRIS (MDR ${String(costSettings.mdr).replace('.', ',')}% × ${rupiah(s.qrisRevenue)})`, minus(s.mdr), { valueCls: 'text-red-600' })}
+                    ${row(`<b>Laba Bersih</b> <span class="text-xs ${s.netProfit >= 0 ? 'text-emerald-600' : 'text-red-500'}">margin ${pct(s.netMargin)}</span>`,
+                          `<b class="text-base">${rupiah(s.netProfit)}</b>`,
+                          { cls: `px-2 rounded mt-1 ${s.netProfit >= 0 ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}` })}
+                </div>
+                ${s.netProfit < 0 && s.revenue > 0 ? '<p class="text-[11px] text-red-500 mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Periode ini rugi: biaya operasional lebih besar dari laba kotor.</p>' : ''}
+            `;
+
+            // Laba kotor per menu
+            const byProfit = s.top.map(m => ({ ...m, profit: m.revenue - m.cost })).sort((a, b) => b.profit - a.profit).slice(0, 6);
+            const maxP = byProfit.length ? Math.max(1, byProfit[0].profit) : 1;
+            document.getElementById('pl-menu-list').innerHTML = byProfit.length ? byProfit.map(m => `
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs gap-2">
+                        <span class="font-semibold text-slate-700 truncate">${escapeHTML(m.name)}</span>
+                        <span class="text-emerald-700 font-bold whitespace-nowrap">${rupiah(m.profit)}</span>
+                    </div>
+                    <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-emerald-500 rounded-full" style="width:${Math.max(0, (m.profit / maxP) * 100)}%"></div>
+                    </div>
+                    <p class="text-[10px] text-slate-400">${m.qty} porsi · margin ${m.revenue ? pct(((m.revenue - m.cost) / m.revenue) * 100) : '0%'}</p>
+                </div>
+            `).join('') : `<p class="text-xs text-slate-400 italic text-center py-6">Belum ada penjualan</p>`;
+        }
+
+        // --- Pengaturan biaya ---
+        function openCostModal() {
+            document.getElementById('cost-inputs').innerHTML = costSettings.opex.map((o, i) => `
+                <div class="flex items-center gap-2">
+                    <label for="cost-input-${i}" class="flex-1 font-semibold text-slate-600">${escapeHTML(o.label)}</label>
+                    <div class="relative w-40">
+                        <span class="absolute left-2.5 top-2 text-slate-400">Rp</span>
+                        <input type="number" id="cost-input-${i}" min="0" step="500" value="${Number(o.amount) || 0}" oninput="updateCostPreview()"
+                            class="w-full pl-8 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-right focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('cost-input-mdr').value = costSettings.mdr;
+            updateCostPreview();
+            document.getElementById('modal-costs').classList.remove('hidden');
+        }
+
+        function closeCostModal() {
+            document.getElementById('modal-costs').classList.add('hidden');
+        }
+
+        function updateCostPreview() {
+            const total = costSettings.opex.reduce((a, _, i) => a + (Number(document.getElementById(`cost-input-${i}`).value) || 0), 0);
+            document.getElementById('cost-total-preview').innerText = rupiah(total);
+        }
+
+        function saveCostSettings(e) {
+            e.preventDefault();
+            costSettings = {
+                opex: costSettings.opex.map((o, i) => ({ ...o, amount: Math.max(0, Number(document.getElementById(`cost-input-${i}`).value) || 0) })),
+                mdr: Math.max(0, Number(document.getElementById('cost-input-mdr').value) || 0)
+            };
+            try { localStorage.setItem('angkringan_costs', JSON.stringify(costSettings)); } catch {}
+            closeCostModal();
+            renderReports();
+        }
+
+        function resetCostSettings() {
+            costSettings = { opex: DEFAULT_OPEX.map(o => ({ ...o })), mdr: DEFAULT_MDR };
+            try { localStorage.removeItem('angkringan_costs'); } catch {}
+            openCostModal();
+            renderReports();
         }
 
         function renderReportChart(range) {
@@ -2002,7 +2225,7 @@
             const rows = [];
             for (let i = 0; i < n; i++) {
                 const r = getPeriodRange(period, -i);
-                rows.push({ label: r.label, start: r.start, end: r.end, ...summarize(ordersInRange(all, r.start, r.end)) });
+                rows.push({ label: r.label, start: r.start, end: r.end, ...summarize(ordersInRange(all, r.start, r.end), r.start, r.end) });
             }
             return rows;
         }
@@ -2029,13 +2252,14 @@
                         <div class="font-extrabold text-slate-800">${rupiah(r.revenue)}</div>
                         <div class="h-1 bg-slate-100 rounded-full mt-1"><div class="h-full bg-brand-500 rounded-full ml-auto" style="width:${(r.revenue / maxRevenue) * 100}%"></div></div>
                     </td>
-                    <td class="py-2.5 px-3 text-right text-emerald-700 font-semibold whitespace-nowrap">${rupiah(r.profit)}</td>
+                    <td class="py-2.5 px-3 text-right text-slate-500 whitespace-nowrap">${rupiah(r.hpp)}</td>
+                    <td class="py-2.5 px-3 text-right font-semibold whitespace-nowrap ${r.netProfit >= 0 ? 'text-emerald-700' : 'text-red-600'}">${rupiah(r.netProfit)}</td>
                     <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">${r.top[0] ? `${escapeHTML(r.top[0].name)} <span class="text-slate-400">(${r.top[0].qty})</span>` : '-'}</td>
                 </tr>
             `).join('');
 
             const last = rows[rows.length - 1], first = rows[0];
-            const total = summarize(ordersInRange(getAllOrders(), last.start, first.end));
+            const total = summarize(ordersInRange(getAllOrders(), last.start, first.end), last.start, first.end);
             document.getElementById('recap-table-foot').innerHTML = `
                 <tr>
                     <td class="py-3 px-3">TOTAL</td>
@@ -2044,7 +2268,8 @@
                     <td class="py-3 px-3 text-right">${total.qris.toLocaleString('id-ID')}</td>
                     <td class="py-3 px-3 text-right">${total.cash.toLocaleString('id-ID')}</td>
                     <td class="py-3 px-3 text-right whitespace-nowrap">${rupiah(total.revenue)}</td>
-                    <td class="py-3 px-3 text-right whitespace-nowrap">${rupiah(total.profit)}</td>
+                    <td class="py-3 px-3 text-right whitespace-nowrap">${rupiah(total.hpp)}</td>
+                    <td class="py-3 px-3 text-right whitespace-nowrap ${total.netProfit >= 0 ? 'text-emerald-700' : 'text-red-600'}">${rupiah(total.netProfit)}</td>
                     <td class="py-3 px-3 whitespace-nowrap">${total.top[0] ? escapeHTML(total.top[0].name) : '-'}</td>
                 </tr>
             `;
@@ -2116,10 +2341,10 @@
         }
 
         function exportRecapToCSV() {
-            const rows = getRecapRows().map(r => [r.label, r.count, r.items, r.qris, r.cash, r.revenue, Math.round(r.profit), r.top[0] ? r.top[0].name : '-']);
+            const rows = getRecapRows().map(r => [r.label, r.count, r.items, r.qris, r.cash, r.revenue, Math.round(r.hpp), Math.round(r.grossProfit), Math.round(r.opex), Math.round(r.mdr), Math.round(r.netProfit), r.top[0] ? r.top[0].name : '-']);
             const name = { day: 'Harian', week: 'Mingguan', month: 'Bulanan' }[recapMode];
             downloadCSV(`Rekap_Penjualan_${name}_Angkringan99_${new Date().toISOString().slice(0, 10)}.csv`,
-                ['Periode', 'Transaksi', 'Porsi Terjual', 'QRIS', 'Tunai', 'Omzet', 'Estimasi Laba', 'Menu Terlaris'], rows);
+                ['Periode', 'Transaksi', 'Porsi Terjual', 'QRIS', 'Tunai', 'Omzet', 'HPP', 'Laba Kotor', 'Biaya Operasional', 'Biaya QRIS', 'Laba Bersih', 'Menu Terlaris'], rows);
         }
 
         // ==========================================
@@ -2305,6 +2530,15 @@
                     <td class="py-2.5 px-3 text-slate-500">${item.category}</td>
                     <td class="py-2.5 px-3 font-bold text-brand-700">Rp ${item.price.toLocaleString('id-ID')}</td>
                     <td class="py-2.5 px-3">
+                        <button onclick="editMenuCost(${item.id})" title="Ubah HPP" class="text-slate-600 hover:text-brand-700 font-semibold">
+                            ${rupiah(item.cost)} <i class="fa-solid fa-pen text-[9px] text-slate-400 ml-1"></i>
+                        </button>
+                    </td>
+                    <td class="py-2.5 px-3">
+                        <span class="font-bold ${item.price - item.cost > 0 ? 'text-emerald-600' : 'text-red-600'}">${rupiah(item.price - item.cost)}</span>
+                        <span class="text-[10px] text-slate-400">(${item.price ? Math.round(((item.price - item.cost) / item.price) * 100) : 0}%)</span>
+                    </td>
+                    <td class="py-2.5 px-3">
                         <button onclick="toggleMenuAvailability(${item.id})" class="px-2 py-1 rounded text-[10px] font-bold ${item.available ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
                             ${item.available ? 'Tersedia' : 'Habis'}
                         </button>
@@ -2324,6 +2558,18 @@
                 renderMenuInventoryTable();
                 renderCustomerMenu();
             }
+        }
+
+        function editMenuCost(id) {
+            const item = menuData.find(m => m.id === id);
+            if (!item) return;
+            const input = prompt(`HPP / modal bahan per porsi untuk "${item.name}" (harga jual ${rupiah(item.price)}):`, item.cost);
+            if (input === null) return;
+            const val = parseInt(String(input).replace(/\D/g, ''));
+            if (isNaN(val) || val < 0) return alert('HPP harus berupa angka.');
+            item.cost = val;
+            saveToLocalStorage();
+            renderMenuInventoryTable();
         }
 
         function deleteMenuItem(id) {
@@ -2348,10 +2594,12 @@
             const price = parseInt(document.getElementById('menu-input-price').value);
             const desc = document.getElementById('menu-input-desc').value;
             const icon = document.getElementById('menu-input-icon').value || 'fa-utensils';
+            const costInput = document.getElementById('menu-input-cost').value;
+            const cost = costInput === '' ? Math.round(price * 0.55) : Math.max(0, parseInt(costInput));
 
             const newItem = {
                 id: Date.now(),
-                name, category, price, desc, icon, available: true
+                name, category, price, cost, desc, icon, available: true
             };
 
             menuData.push(newItem);
